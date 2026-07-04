@@ -1,0 +1,54 @@
+# DECISIONS.md — Registro de decisões do agente executor
+
+Formato: `D<N> — <decisão>` com racional curto. Decisões que interpretam ambiguidade da spec
+(SPEC_CASCATA.md v1.0) sem violar Pilares (§1) nem critérios (§8).
+
+---
+
+**D1 — Repositório e branch.** O jogo vive no repo dedicado `gtwunsch/cascata` (criado pelo
+usuário durante a sessão), branch `main` — repo novo e vazio, dedicado ao projeto.
+
+**D2 — Direções em bússola de 8 pontos.** Pulsos têm direção ∈ {R, DR, D, DL, L, UL, U, UR}
+(índices 0–7, rotação = ±k·45°). "Diagonais frontais" = rotate(±1); "virar" = rotate(±2).
+Emissões são relativas à direção de entrada do pulso (spec §4.2 usa "frontais"), exceto
+símbolos que declaram direções absolutas.
+
+**D3 — Símbolo já disparado é atravessável.** Pulso que atinge símbolo já disparado passa
+através sem disparar, mantendo direção e potência. Racional: célula ocupada não deve virar
+parede acidental; sem rotação em pass-through não há loops infinitos (término garantido).
+
+**D4 — Potência multiplica pontos de disparo.** Pulso carrega `potencia` (float, inicia 1).
+Pontos de Gerador = base × potência. Duplicação de pulso preserva potência (F2: combinação
+explosiva). Condutores podem modificar potência.
+
+**D5 — Elo e cadeia.** "Elo" = 1 disparo na linhagem de um pulso (`depth`). "Maior cadeia" =
+maior depth atingido na resolução. Mutadores de cap de cadeia usam depth.
+
+**D6 — Fórmula da meta.** `meta(ante,rodada) = 40 × 2.1^(ante-1) × [1.0,1.5,2.2][rodada]`
+(§4.5). Nota: o "Ante 8 chefe ≈ 200k+" da spec não bate com a própria fórmula (dá ≈15.8k);
+a fórmula + harness (§8, autoridade final) governam. Valores finais em BALANCE_LOG.md.
+
+**D7 — Ordem determinística de pulsos.** A cada tick, todos os pulsos avançam 1 célula e são
+processados em ordem (fileira↑, coluna↑, dir↑). Dois pulsos no mesmo símbolo no mesmo tick:
+o primeiro dispara, o segundo atravessa (D3).
+
+**D8 — Overflow.** Se pontuação ≥ 3× meta: fichas extras = min(8, floor(pontuação/meta)).
+
+**D9 — Mão e início de run.** Símbolos comprados vão para a "mão" (cap 8). Run inicia com mão
+definida pelo Emissor escolhido (padrão: 2 geradores básicos + 1 condutor) e 6 fichas.
+
+**D10 — Relíquias.** Spec cita "1 relíquia" na loja (§3.2) sem detalhar. Definidas como
+modificadores passivos de run (12 no pool v1), preço 6–10, máx. 5 por run, 1 oferta por loja.
+
+**D11 — bot_sinergia e os 200 rollouts.** Resolução é determinística (§11), então rollouts
+só têm variância via lojas/drafts futuros. Implementação: por decisão, candidatos são
+pré-filtrados por avaliação imediata (1 resolução cada) e os top-K recebem rollouts com
+política de playout barata até o fim do ante corrente, num total de ≈200 rollouts por decisão.
+
+**D12 — Lendários como quebras de regra estrutural (§4.2).** fantasma: pulso atravessa células
+vazias; eco: cada símbolo dispara até 2×; nucleo: Emissor emite 2º pulso na fileira oposta;
+singularidade: ×3 mult; reator: emite nas 4 ortogonais e pontua por ficha guardada; midas:
+aumento de mult gera fichas.
+
+**D13 — Grid persiste, placar zera.** O grid (a máquina) persiste entre rodadas e antes da
+mesma run. A pontuação de cada rodada é a de uma única resolução.
