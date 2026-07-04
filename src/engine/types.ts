@@ -59,6 +59,8 @@ export interface Resolucao {
   memDeltas: number[];
   /** células vazias alcançadas por pulsos — a "fronteira" expansível da máquina */
   fronteira: number[];
+  /** rastro de pulsos por tick (só com mods.trace — para a animação da UI) */
+  rastro: { tick: number; x: number; y: number; dir: Dir; depth: number }[];
   score: number; // preenchido ao final: round(pontos × mult), com relíquias finais
 }
 
@@ -117,6 +119,7 @@ export interface ResolveMods {
   potenciaInicial?: number;
   apagao?: boolean; // 1º elo não dispara
   condutor2x?: boolean; // relíquia ressonância: condutores disparam 2×/cascata
+  trace?: boolean; // grava rastro de pulsos para a animação
   tetoMult?: number;
   /** bônus de pontos-base por papel (relíquias lente_polida/turbina) */
   bonusPapel?: Partial<Record<Papel, number>>;

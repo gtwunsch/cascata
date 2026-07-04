@@ -22,6 +22,7 @@ export function novaResolucao(): Resolucao {
     rerollGratis: false,
     memDeltas: new Array(N_CELLS).fill(0),
     fronteira: [],
+    rastro: [],
     score: 0,
   };
 }
@@ -67,6 +68,7 @@ export function resolve(run: RunView, mods: ResolveMods = {}): Resolucao {
     }
     // 2) ordem determinística: cima→baixo, esquerda→direita, direção
     moved.sort((a, b) => a.y - b.y || a.x - b.x || a.dir - b.dir);
+    if (mods.trace) for (const p of moved) res.rastro.push({ tick, x: p.x, y: p.y, dir: p.dir, depth: p.depth });
 
     const next: Pulse[] = [];
     for (const p of moved) {

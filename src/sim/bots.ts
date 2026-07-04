@@ -140,10 +140,9 @@ const guloso: Bot = {
 
 const RELIC_PRIORIDADE = ['ressonancia', 'braco_extra', 'prisma_bruto', 'lente_polida', 'bateria', 'turbina', 'metronomo', 'ima', 'estoque', 'cofre', 'faro', 'cupom', 'reciclagem'];
 
-const sinergia: Bot = {
-  nome: 'sinergia',
-  construir(run, rng) {
-    while (run.status === 'construindo' && run.placementsLeft > 0 && run.mao.length > 0) {
+/** fase de posicionamento do sinergia (sem resolver) — reusada pelo autobot da UI (Fase 5) */
+export function colocarPecasSinergia(run: Run, rng: Rng): void {
+  while (run.status === 'construindo' && run.placementsLeft > 0 && run.mao.length > 0) {
       const qPass = qualidade(run);
       const candidatos: Candidato[] = [];
       for (let m = 0; m < run.mao.length; m++) {
@@ -192,8 +191,14 @@ const sinergia: Bot = {
         continue;
       }
       // grade travada (ex.: capacitor bloqueou o fluxo): tenta remover-e-substituir
-      if (!tentarSubstituir(run)) break;
-    }
+    if (!tentarSubstituir(run)) break;
+  }
+}
+
+const sinergia: Bot = {
+  nome: 'sinergia',
+  construir(run, rng) {
+    colocarPecasSinergia(run, rng);
     run.resolver();
   },
   loja(run, rng) {

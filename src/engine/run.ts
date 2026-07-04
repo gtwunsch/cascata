@@ -54,8 +54,10 @@ export class Run implements RunView {
   stats: RunStats = { maxCadeia: 0, melhorScore: 0, decisoes: 0, rodadasJogadas: 0, comprados: [], simboloMvp: null };
   /** modo endless pós-vitória (§3.3) */
   anteInfinito = false;
+  /** bônus permanentes de meta-progressão (F9) */
+  maoBonus = 0;
 
-  constructor(seedStr: string, opts: { emitterId?: string; pool?: string[]; cfg?: RunConfig } = {}) {
+  constructor(seedStr: string, opts: { emitterId?: string; pool?: string[]; cfg?: RunConfig; bonus?: { fichas?: number; mao?: number; rerollGratis?: boolean } } = {}) {
     this.cfg = opts.cfg ?? DEFAULT_CONFIG;
     this.seedStr = seedStr;
     this.rng = new Rng(seedFromString(seedStr));
@@ -79,6 +81,9 @@ export class Run implements RunView {
     });
     this.placementsLeft = this.placementsBase();
     this.pool = opts.pool ?? [];
+    if (opts.bonus?.fichas) this.fichas += opts.bonus.fichas;
+    if (opts.bonus?.mao) this.maoBonus = opts.bonus.mao;
+    if (opts.bonus?.rerollGratis) this.rerollGratis = true;
     // chefes: mutadores brandos nos antes 1-2, os duros vêm depois (mortes cedo por sorteio não são interessantes)
     const brandos = ['curto_circuito', 'sobrecarga', 'pedagio', 'imposto', 'teto', 'escassez'];
     const suaves = this.rng.shuffle(MUTATORS.filter((m) => brandos.includes(m.id)).map((m) => m.id));
@@ -103,7 +108,7 @@ export class Run implements RunView {
   }
 
   maoCap(): number {
-    return this.cfg.maoCap + (this.relics.includes('estoque') ? 3 : 0);
+    return this.cfg.maoCap + this.maoBonus + (this.relics.includes('estoque') ? 3 : 0);
   }
 
   /** compõe os modificadores de resolução: mutador + emissor + relíquias */
@@ -371,6 +376,77 @@ export class Run implements RunView {
     const out: SymbolDef[] = [];
     for (const p of this.grid) if (p) out.push(getSymbol(p.id));
     return out;
+  }
+
+  /** desfaz o último posicionamento (oil §6: undo antes de RESOLVER) */
+  desfazerPosicionamento(cell: number): boolean {
+    if (this.status !== 'construindo' || !this.grid[cell]) return false;
+    const p = this.grid[cell]!;
+    if (this.mao.length >= this.maoCap()) return false;
+    this.grid[cell] = null;
+    this.mao.push(p.id);
+    this.placementsLeft++;
+    this.stats.decisoes = Math.max(0, this.stats.decisoes - 1);
+    return true;
+  }
+
+  /** estado completo serializável em JSON (§10) */
+  serialize(): Record<string, unknown> {
+    return {
+      v: 1,
+      seedStr: this.seedStr,
+      rng: this.rng.getState(),
+      emitterId: this.emitterId,
+      ante: this.ante,
+      rodada: this.rodada,
+      grid: this.grid,
+      mao: this.mao,
+      fichas: this.fichas,
+      relics: this.relics,
+      status: this.status,
+      placementsLeft: this.placementsLeft,
+      remocoesUsadas: this.remocoesUsadas,
+      mutadoresRun: this.mutadoresRun,
+      mutadorAtualId: this.mutadorAtual?.id ?? null,
+      blockedCells: [...this.blockedCells],
+      skipNextShop: this.skipNextShop,
+      papeisNaRodada: [...this.papeisNaRodada],
+      rerollGratis: this.rerollGratis,
+      rerollCount: this.rerollCount,
+      comprasNaLoja: this.comprasNaLoja,
+      shop: this.shop,
+      pool: this.pool,
+      stats: this.stats,
+      anteInfinito: this.anteInfinito,
+      maoBonus: this.maoBonus,
+    };
+  }
+
+  static deserialize(d: Record<string, unknown>): Run {
+    const r = new Run(d.seedStr as string, { emitterId: d.emitterId as string, pool: d.pool as string[] });
+    r.rng = Rng.fromState(d.rng as number);
+    r.ante = d.ante as number;
+    r.rodada = d.rodada as number;
+    r.grid = (d.grid as (PlacedSymbol | null)[]).map((p) => (p ? { ...p } : null));
+    r.mao = [...(d.mao as string[])];
+    r.fichas = d.fichas as number;
+    r.relics = [...(d.relics as string[])];
+    r.status = d.status as RunStatus;
+    r.placementsLeft = d.placementsLeft as number;
+    r.remocoesUsadas = d.remocoesUsadas as number;
+    r.mutadoresRun = [...(d.mutadoresRun as string[])];
+    r.mutadorAtual = d.mutadorAtualId ? mutatorById(d.mutadorAtualId as string) : null;
+    r.blockedCells = new Set(d.blockedCells as number[]);
+    r.skipNextShop = d.skipNextShop as boolean;
+    r.papeisNaRodada = new Set(d.papeisNaRodada as Papel[]);
+    r.rerollGratis = d.rerollGratis as boolean;
+    r.rerollCount = d.rerollCount as number;
+    r.comprasNaLoja = d.comprasNaLoja as number;
+    r.shop = d.shop as ShopOffer;
+    r.stats = d.stats as RunStats;
+    r.anteInfinito = d.anteInfinito as boolean;
+    r.maoBonus = (d.maoBonus as number) ?? 0;
+    return r;
   }
 
   /** cópia profunda para rollouts de bots — RNG clonado no mesmo estado */

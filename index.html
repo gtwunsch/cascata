@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CASCATA</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="stylesheet" href="/src/ui/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="hud">
+      <div id="hud-score"><span id="pontos">0</span><span id="vezes">×</span><span id="mult">1</span><span id="igual">=</span><span id="score">0</span></div>
+      <div id="hud-meta">META <b id="meta">0</b></div>
+      <div id="hud-info">
+        <span id="ante">ANTE 1·1</span>
+        <span id="fichas">⬡ 0</span>
+        <button id="btn-vel" title="velocidade">1×</button>
+        <button id="btn-som" title="som">♪</button>
+        <button id="btn-meta-panel" title="oficina">☰</button>
+      </div>
+    </header>
+    <div id="mutador" hidden></div>
+    <div id="palco"><canvas id="jogo"></canvas></div>
+    <div id="mao-wrap">
+      <div id="mao"></div>
+      <div id="acoes">
+        <span id="posicoes"></span>
+        <button id="btn-desfazer" hidden>DESFAZER</button>
+        <button id="btn-resolver">RESOLVER</button>
+      </div>
+    </div>
+    <div id="loja" class="overlay" hidden></div>
+    <div id="fim" class="overlay" hidden></div>
+    <div id="oficina" class="overlay" hidden></div>
+    <div id="tooltip" hidden></div>
+    <div id="hint" hidden></div>
+    <div id="banner" hidden></div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
