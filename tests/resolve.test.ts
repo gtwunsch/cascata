@@ -170,3 +170,36 @@ describe('modificadores de resolução (mutadores §4.6)', () => {
     expect(r.score).toBe(Math.round(r.pontos * 1.5));
   });
 });
+
+describe('peças giradas (espelhadas) — feedback de playtest', () => {
+  it('cotovelo_d girado vira para o outro lado (R→U em vez de R→D)', () => {
+    const view = rv([[0, 1, 'cotovelo_d'], [0, 0, 'faisca'], [0, 2, 'celula']]);
+    const normal = resolve(view);
+    expect(normal.eventos.some((e) => e.symbolId === 'celula')).toBe(true); // vira p/ baixo
+    view.grid[at(0, 1)]!.inv = true;
+    const girado = resolve(view);
+    expect(girado.eventos.some((e) => e.symbolId === 'faisca')).toBe(true); // girado: p/ cima
+    expect(girado.eventos.some((e) => e.symbolId === 'celula')).toBe(false);
+  });
+
+  it('dinamo girado emite na diagonal oposta', () => {
+    const view = rv([[0, 1, 'dinamo'], [1, 2, 'faisca'], [1, 0, 'celula']]);
+    expect(resolve(view).eventos.some((e) => e.symbolId === 'faisca')).toBe(true);
+    view.grid[at(0, 1)]!.inv = true;
+    expect(resolve(view).eventos.some((e) => e.symbolId === 'celula')).toBe(true);
+  });
+
+  it('peças simétricas não mudam ao girar (cano segue reto)', () => {
+    const view = rv([[0, 1, 'cano'], [1, 1, 'faisca']]);
+    const a = resolve(view).score;
+    view.grid[at(0, 1)]!.inv = true;
+    expect(resolve(view).score).toBe(a);
+  });
+
+  it('agulha girada emite para cima', () => {
+    const view = rv([[0, 1, 'agulha'], [0, 0, 'faisca'], [0, 2, 'celula']]);
+    expect(resolve(view).eventos.some((e) => e.symbolId === 'celula')).toBe(true);
+    view.grid[at(0, 1)]!.inv = true;
+    expect(resolve(view).eventos.some((e) => e.symbolId === 'faisca')).toBe(true);
+  });
+});

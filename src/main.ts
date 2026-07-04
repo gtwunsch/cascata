@@ -93,6 +93,10 @@ function sujo(): void {
   simCache = null;
   atualizarHud();
   renderMao();
+  // caminho projetado do pulso na grade (legibilidade: por que algo não dispara)
+  const mods = run.buildMods();
+  mods.trace = true;
+  render.fluxo = resolve(run, mods).rastro;
   metaP.salvarRun(run);
 }
 
@@ -244,7 +248,21 @@ canvas.addEventListener('pointerdown', (e) => {
   const def = getSymbol(run.grid[cell]!.id);
   const custo = run.custoRemocao();
   const pos = render.posicaoNaTela(cell);
-  mostraTooltipEm(pos.x, pos.y - 30, tooltipHtml(def) + `<button id="tt-remover">REMOVER ${custo > 0 ? `(${custo}⬡)` : '(grátis)'}</button>`, true);
+  const girada = run.grid[cell]!.inv ? ' <span style="color:#37e0e8">(girada ⟲)</span>' : '';
+  mostraTooltipEm(
+    pos.x,
+    pos.y - 30,
+    tooltipHtml(def) + girada + `<div style="display:flex;gap:6px"><button id="tt-girar">GIRAR ⟲</button><button id="tt-remover">REMOVER ${custo > 0 ? `(${custo}⬡)` : '(grátis)'}</button></div>`,
+    true,
+  );
+  document.getElementById('tt-girar')?.addEventListener('click', () => {
+    if (run.girar(cell)) {
+      som.clique();
+      sujo();
+    }
+    escondeTooltip();
+    tooltip.classList.remove('interativo');
+  });
   document.getElementById('tt-remover')?.addEventListener('click', () => {
     if (run.remover(cell)) {
       som.clique();

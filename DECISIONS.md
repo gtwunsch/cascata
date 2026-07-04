@@ -75,5 +75,14 @@ produção ~70 KB (< 500 KB). Deviação v0.1: desbloqueio de símbolos por Suca
 (pool completo desde o início; Sucata compra emissores e upgrades) — o balanceamento foi
 medido no pool cheio.
 
+**D17 — Girar peças + fluxo projetado (feedback de playtest do usuário).** (a) Toda peça
+posicionada pode ser GIRADA (grátis, na construção): a emissão é espelhada no eixo do
+movimento do pulso — cotovelo ⤵ vira ⤴, dínamo emite na diagonal oposta, agulha passa a
+emitir para cima; peças simétricas não mudam. Mantém o "um verbo" (§1.2): girar é parte de
+posicionar, como orientar peça em Tetris. (b) A grade agora desenha o caminho projetado do
+pulso durante a construção (ciano translúcido) — torna visível por que um símbolo fora do
+fluxo não dispara e que cadeias múltiplas nascem de divisores/Emissor Gêmeo, não de mais
+geradores. Bots ainda não usam girar (leve vantagem humana; anotado no BALANCE_LOG).
+
 **D13 — Grid persiste, placar zera.** O grid (a máquina) persiste entre rodadas e antes da
 mesma run. A pontuação de cada rodada é a de uma única resolução.

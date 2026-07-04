@@ -52,3 +52,5 @@ tudo; a iteração continua no pós-v0.1 sem afrouxar critério algum.
 2. Diversidade ≤45%: ampliar pool de "viradores" (hoje 2 cotovelos concentram corredores);
    candidato: redesign de espelho_c como virador diagonal.
 3. fenda/colosso: repensar end-caps raros (morrem no metric por serem compra situacional).
+4. Bots não usam a ação GIRAR (D17) — ensinar ao sinergia e re-medir (winrate humano efetivo
+   é levemente maior que o medido).

@@ -20,6 +20,8 @@ export class Render {
   private flutuantes: Flutuante[] = [];
   private flashes = new Map<number, number>(); // cell → intensidade 0..1
   pulsos: PulsoVisual[] = [];
+  /** caminho projetado do pulso (fase de construção): posições visitadas com direção */
+  fluxo: { x: number; y: number; dir: number }[] = [];
   private shakeAmp = 0;
   private shakeAte = 0;
   celulaDestacada = -1;
@@ -170,11 +172,29 @@ export class Render {
       ctx.shadowBlur = 0;
     }
 
+    // caminho projetado do pulso (legibilidade §7): só fora da resolução
+    if (!resolvendo && run.status === 'construindo') {
+      ctx.strokeStyle = COR.pulso;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.globalAlpha = 0.16;
+      for (const fpt of this.fluxo) {
+        const para = this.gridParaTela(fpt.x, fpt.y);
+        const dx = [1, 1, 0, -1, -1, -1, 0, 1][fpt.dir]!;
+        const dy = [0, 1, 1, 1, 0, -1, -1, -1][fpt.dir]!;
+        ctx.beginPath();
+        ctx.moveTo(para.x - dx * CS, para.y - dy * CS);
+        ctx.lineTo(para.x - dx * CS * 0.28, para.y - dy * CS * 0.28);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
     // símbolos
     for (let i = 0; i < GRID_W * GRID_H; i++) {
       const p = run.grid[i];
       if (!p) continue;
-      this.drawChip(i, p.id, p.mem, this.flashes.get(i) ?? 0);
+      this.drawChip(i, p.id, p.mem, this.flashes.get(i) ?? 0, !!p.inv);
     }
 
     // pulsos
@@ -223,7 +243,7 @@ export class Render {
     ctx.restore();
   }
 
-  private drawChip(idx: number, id: string, mem: number, flash: number): void {
+  private drawChip(idx: number, id: string, mem: number, flash: number, inv = false): void {
     const ctx = this.ctx;
     const def = getSymbol(id);
     const c = this.centroDaCelula(idx);
@@ -262,6 +282,12 @@ export class Render {
       ctx.font = '700 10px ui-monospace, monospace';
       ctx.textAlign = 'right';
       ctx.fillText(`+${mem}`, x + w - 4, y + 9);
+    }
+    if (inv) {
+      ctx.fillStyle = COR.pulso;
+      ctx.font = '700 12px ui-monospace, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('⟲', x + 4, y + 12);
     }
     ctx.textBaseline = 'alphabetic';
   }

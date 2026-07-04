@@ -221,3 +221,25 @@ describe('metas, chefes e vitória (§3.3, §4.5)', () => {
     expect(r.placementsLeft).toBe(2);
   });
 });
+
+describe('girar peças (ação grátis de construção)', () => {
+  it('girar alterna inv, é grátis e só funciona na fase de construção', () => {
+    const r = novaRun();
+    r.posicionar(0, at(0, 1));
+    const fichas = r.fichas;
+    expect(r.girar(at(0, 1))).toBe(true);
+    expect(r.grid[at(0, 1)]!.inv).toBe(true);
+    expect(r.fichas).toBe(fichas);
+    expect(r.girar(at(0, 1))).toBe(true);
+    expect(r.grid[at(0, 1)]!.inv).toBe(false);
+    expect(r.girar(at(3, 3))).toBe(false); // célula vazia
+  });
+
+  it('inv sobrevive à serialização', () => {
+    const r = novaRun();
+    r.posicionar(0, at(0, 1));
+    r.girar(at(0, 1));
+    const r2 = Run.deserialize(JSON.parse(JSON.stringify(r.serialize())));
+    expect(r2.grid[at(0, 1)]!.inv).toBe(true);
+  });
+});

@@ -169,6 +169,13 @@ export class Run implements RunView {
     return true;
   }
 
+  /** gira (espelha) uma peça posicionada — grátis, só na fase de construção */
+  girar(cell: number): boolean {
+    if (this.status !== 'construindo' || !this.grid[cell]) return false;
+    this.grid[cell]!.inv = !this.grid[cell]!.inv;
+    return true;
+  }
+
   custoRemocao(): number {
     if (this.relics.includes('reciclagem')) return 0;
     return this.remocoesUsadas < this.cfg.remocoesGratis ? 0 : this.cfg.custoRemocao;

@@ -6,10 +6,11 @@ export type Papel = 'gerador' | 'condutor' | 'amplificador' | 'gatilho' | 'econo
 
 export const PAPEIS: readonly Papel[] = ['gerador', 'condutor', 'amplificador', 'gatilho', 'economico'];
 
-/** símbolo posicionado na grade; `mem` é estado persistente (ex.: brasa acumula pontos) */
+/** símbolo posicionado na grade; `mem` é estado persistente; `inv` = peça espelhada (girada) */
 export interface PlacedSymbol {
   id: string;
   mem: number;
+  inv?: boolean;
 }
 
 export interface Pulse {

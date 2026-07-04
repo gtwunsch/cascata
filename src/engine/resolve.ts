@@ -1,7 +1,8 @@
 /** Purpose: motor de propagação da cascata (§4.3) — puro e determinístico | Exports: resolve, novaResolucao, EMISSOR_PADRAO | Dependencies: dirs, registry, types */
 import { DIR_R, DX, DY, GRID_H, N_CELLS, cellIdx, inBounds } from './dirs';
 import { getSymbol } from './registry';
-import type { Pulse, Resolucao, ResolveMods, RunView, TriggerCtx } from './types';
+import type { Dir } from './dirs';
+import type { EmitOut, Pulse, Resolucao, ResolveMods, RunView, TriggerCtx } from './types';
 
 const TICK_CAP = 400; // trava de segurança; término é garantido por D3, isto nunca deve atingir
 const PULSE_CAP = 64; // pulsos simultâneos máximos (determinístico: excedentes descartados em ordem)
@@ -134,8 +135,11 @@ export function resolve(run: RunView, mods: ResolveMods = {}): Resolucao {
         scoreParcial: Math.round(res.pontos * res.mult),
       });
 
-      // 4) emissão
-      const outs = def.emitir ? def.emitir(p.dir, ctx) : [{ dir: p.dir }];
+      // 4) emissão (peça espelhada: reflete cada direção no eixo do movimento do pulso)
+      let outs = def.emitir ? def.emitir(p.dir, ctx) : [{ dir: p.dir } as EmitOut];
+      if (placed.inv) {
+        outs = outs.map((o) => (o.reinjetar ? o : { ...o, dir: (((2 * p.dir - o.dir) % 8) + 8) % 8 as Dir }));
+      }
       for (const o of outs) {
         if (next.length >= PULSE_CAP) break;
         const pot = p.potencia * (o.potenciaMul ?? 1) + (o.potenciaAdd ?? 0);
