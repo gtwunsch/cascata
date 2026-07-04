@@ -1,5 +1,5 @@
 /** Purpose: 18 símbolos incomuns | Exports: (registra no registry) | Dependencies: effects, registry */
-import { addFichas, addMult, addPontos, emAbs, emDiag2, emTridente, emViraD, emViraE } from '../effects';
+import { addFichas, addMult, addPontos, emAbs, emDiag2, emTridente } from '../effects';
 import { registerSymbol } from '../registry';
 import { DIR_D, DIR_U } from '../dirs';
 import type { SymbolDef } from '../types';
@@ -8,14 +8,14 @@ const defs: SymbolDef[] = [
   // ---- GERADORES (5) ----
   {
     id: 'gemeo', nome: 'Gêmeo', raridade: 'incomum', custo: 6, papel: 'gerador',
-    desc: '+12 pontos. Duplica o pulso para as 2 diagonais frontais.',
-    onTrigger: (c) => addPontos(c, 12),
-    emitir: emDiag2,
+    desc: '+14 pontos. Duplica para as diagonais frontais, cada pulso com 85% da potência.',
+    onTrigger: (c) => addPontos(c, 14),
+    emitir: (d) => emDiag2(d).map((o) => ({ ...o, potenciaMul: 0.85 })),
   },
   {
     id: 'forja', nome: 'Forja', raridade: 'incomum', custo: 6, papel: 'gerador',
-    desc: '+10 pontos, +6 por Amplificador já disparado nesta cascata.',
-    onTrigger: (c) => addPontos(c, 10 + 6 * c.res.disparosPorPapel.amplificador),
+    desc: '+10 pontos, +7 por Amplificador já disparado nesta cascata.',
+    onTrigger: (c) => addPontos(c, 10 + 7 * c.res.disparosPorPapel.amplificador),
   },
   {
     id: 'cristal', nome: 'Cristal', raridade: 'incomum', custo: 6, papel: 'gerador',
@@ -25,15 +25,15 @@ const defs: SymbolDef[] = [
   },
   {
     id: 'usina', nome: 'Usina', raridade: 'incomum', custo: 7, papel: 'gerador',
-    desc: '+25 pontos. Só dispara do 4º elo em diante (antes, o pulso atravessa).',
+    desc: '+28 pontos. Só dispara do 4º elo em diante (antes, o pulso atravessa).',
     podeDisparar: (c) => c.depth >= 4,
-    onTrigger: (c) => addPontos(c, 25),
+    onTrigger: (c) => addPontos(c, 28),
   },
   {
     id: 'geiser', nome: 'Gêiser', raridade: 'incomum', custo: 5, papel: 'gerador',
-    desc: '+14 pontos. Emite para cima e para baixo.',
-    onTrigger: (c) => addPontos(c, 14),
-    emitir: () => emAbs(DIR_U, DIR_D),
+    desc: '+9 pontos. Emite para cima e para baixo, cada um com 80% da potência.',
+    onTrigger: (c) => addPontos(c, 9),
+    emitir: () => emAbs(DIR_U, DIR_D).map((o) => ({ ...o, potenciaMul: 0.8 })),
   },
 
   // ---- CONDUTORES (4) ----
@@ -46,30 +46,27 @@ const defs: SymbolDef[] = [
   },
   {
     id: 'trifurcador', nome: 'Trifurcador', raridade: 'incomum', custo: 7, papel: 'condutor',
-    desc: 'Triplica o pulso: frontal e as 2 diagonais frontais.',
-    emitir: emTridente,
+    desc: 'Triplica o pulso: frontal e diagonais frontais, cada um com 75% da potência.',
+    emitir: (d) => emTridente(d).map((o) => ({ ...o, potenciaMul: 0.75 })),
   },
   {
-    id: 'acelerador', nome: 'Acelerador', raridade: 'incomum', custo: 6, papel: 'condutor',
-    desc: 'Potência do pulso ×1.5.',
-    emitir: (d) => [{ dir: d, potenciaMul: 1.5 }],
+    id: 'divisor', nome: 'Divisor', raridade: 'incomum', custo: 6, papel: 'condutor',
+    desc: '+4 pontos. Duplica para as diagonais frontais, cada pulso com 80% da potência.',
+    onTrigger: (c) => addPontos(c, 4),
+    emitir: (d) => emDiag2(d).map((o) => ({ ...o, potenciaMul: 0.8 })),
   },
   {
-    id: 'ziguezague', nome: 'Ziguezague', raridade: 'incomum', custo: 5, papel: 'condutor',
-    desc: '+5 pontos. Alterna: vira à direita, depois à esquerda, a cada disparo.',
-    onTrigger: (c) => addPontos(c, 5),
-    emitir: (d, c) => {
-      const out = c.mem() % 2 === 0 ? emViraD(d) : emViraE(d);
-      c.bumpMem(1);
-      return out;
-    },
+    id: 'funil', nome: 'Funil', raridade: 'incomum', custo: 5, papel: 'condutor',
+    desc: '+4 pontos, +1 por elo já percorrido. Vira o pulso rumo ao centro da grade.',
+    onTrigger: (c) => addPontos(c, 4 + (c.depth - 1)),
+    emitir: (_d, c) => [{ dir: Math.floor(c.cell / 5) <= 1 ? 2 : 6 }],
   },
 
   // ---- AMPLIFICADORES (4) ----
   {
-    id: 'duplicador', nome: 'Duplicador', raridade: 'incomum', custo: 7, papel: 'amplificador',
-    desc: 'Mult +1.',
-    onTrigger: (c) => addMult(c, 1),
+    id: 'duplicador', nome: 'Duplicador', raridade: 'incomum', custo: 6, papel: 'amplificador',
+    desc: 'Mult +0.5; +1.2 no total se este é o 5º elo ou além.',
+    onTrigger: (c) => addMult(c, c.depth >= 5 ? 1.2 : 0.5),
   },
   {
     id: 'ressonador', nome: 'Ressonador', raridade: 'incomum', custo: 6, papel: 'amplificador',
@@ -78,9 +75,9 @@ const defs: SymbolDef[] = [
   },
   {
     id: 'polaridade', nome: 'Polaridade', raridade: 'incomum', custo: 7, papel: 'amplificador',
-    desc: 'Mult +1.5, mas o pulso sai com 70% da potência.',
-    onTrigger: (c) => addMult(c, 1.5),
-    emitir: (d) => [{ dir: d, potenciaMul: 0.7 }],
+    desc: 'Mult +1.0, mas o pulso sai com 60% da potência.',
+    onTrigger: (c) => addMult(c, 1.0),
+    emitir: (d) => [{ dir: d, potenciaMul: 0.6 }],
   },
   {
     id: 'amplivela', nome: 'Amplivela', raridade: 'incomum', custo: 6, papel: 'amplificador',
@@ -108,21 +105,25 @@ const defs: SymbolDef[] = [
   },
   {
     id: 'cronometro', nome: 'Cronômetro', raridade: 'incomum', custo: 5, papel: 'gatilho',
-    desc: 'Em elos pares, duplica o pulso para as diagonais frontais; em ímpares, continua.',
-    emitir: (d, c) => (c.depth % 2 === 0 ? emDiag2(d) : [{ dir: d }]),
+    desc: '+4 pontos. Em elos pares, duplica para as diagonais frontais (80% da potência).',
+    onTrigger: (c) => addPontos(c, 4),
+    emitir: (d, c) => (c.depth % 2 === 0 ? emDiag2(d).map((o) => ({ ...o, potenciaMul: 0.8 })) : [{ dir: d }]),
   },
 
   // ---- ECONÔMICOS (2) ----
   {
     id: 'banqueiro', nome: 'Banqueiro', raridade: 'incomum', custo: 6, papel: 'economico',
-    desc: '+1 ficha por 2 Amplificadores disparados nesta cascata (máx. 3).',
-    onTrigger: (c) => addFichas(c, Math.min(3, Math.floor(c.res.disparosPorPapel.amplificador / 2))),
+    desc: '+4 pontos. +1 ficha por 2 Amplificadores disparados nesta cascata (máx. 3).',
+    onTrigger: (c) => {
+      addPontos(c, 4);
+      addFichas(c, Math.min(3, Math.floor(c.res.disparosPorPapel.amplificador / 2)));
+    },
   },
   {
     id: 'cupom_vivo', nome: 'Cupom Vivo', raridade: 'incomum', custo: 5, papel: 'economico',
-    desc: '+3 pontos. O próximo reroll da loja é grátis.',
+    desc: '+6 pontos. O próximo reroll da loja é grátis.',
     onTrigger: (c) => {
-      addPontos(c, 3);
+      addPontos(c, 6);
       c.res.rerollGratis = true;
     },
   },

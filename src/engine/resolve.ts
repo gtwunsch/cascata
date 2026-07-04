@@ -21,6 +21,7 @@ export function novaResolucao(): Resolucao {
     midasFichas: 0,
     rerollGratis: false,
     memDeltas: new Array(N_CELLS).fill(0),
+    fronteira: [],
     score: 0,
   };
 }
@@ -74,6 +75,7 @@ export function resolve(run: RunView, mods: ResolveMods = {}): Resolucao {
       if (mods.blockedCells?.has(idx)) continue; // estática
       const placed = run.grid[idx];
       if (!placed) {
+        if (!res.fronteira.includes(idx)) res.fronteira.push(idx);
         if (ghost) next.push(p); // fantasma: atravessa vazio
         continue; // célula vazia interrompe o ramo (§4.3.3)
       }
@@ -92,7 +94,8 @@ export function resolve(run: RunView, mods: ResolveMods = {}): Resolucao {
           res.memDeltas[idx] = res.memDeltas[idx]! + n;
         },
       };
-      const podeFisico = res.disparosPorCelula[idx]! < maxFires && mods.disabledRow !== p.y;
+      const capCelula = maxFires + (mods.condutor2x && def.papel === 'condutor' ? 1 : 0);
+      const podeFisico = res.disparosPorCelula[idx]! < capCelula && mods.disabledRow !== p.y;
       const podeCond = def.podeDisparar ? def.podeDisparar(ctx) : true;
       if (!podeFisico || !podeCond) {
         next.push(p); // atravessa sem disparar (D3)

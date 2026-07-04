@@ -3,6 +3,9 @@
 export interface RunConfig {
   metaBase: number;
   metaGrowth: number;
+  /** crescimento após metaSplitAnte (curva em 2 fases: early acessível, late punitivo) */
+  metaGrowthLate: number;
+  metaSplitAnte: number;
   metaRodada: readonly [number, number, number];
   antes: number;
   fichasBase: number;
@@ -24,12 +27,14 @@ export interface RunConfig {
 }
 
 export const DEFAULT_CONFIG: RunConfig = {
-  metaBase: 40,
-  metaGrowth: 2.1,
-  metaRodada: [1.0, 1.5, 2.2],
+  metaBase: 10,
+  metaGrowth: 1.52,
+  metaGrowthLate: 3.8,
+  metaSplitAnte: 5,
+  metaRodada: [1.0, 1.45, 2.1],
   antes: 8,
-  fichasBase: 4,
-  fichasCadeiaCap: 10,
+  fichasBase: 6,
+  fichasCadeiaCap: 12,
   jurosDiv: 5,
   jurosCap: 5,
   overflowMin: 3,
@@ -46,5 +51,7 @@ export const DEFAULT_CONFIG: RunConfig = {
 };
 
 export function metaDaRodada(cfg: RunConfig, ante: number, rodada: number): number {
-  return Math.round(cfg.metaBase * Math.pow(cfg.metaGrowth, ante - 1) * cfg.metaRodada[rodada - 1]!);
+  const early = Math.pow(cfg.metaGrowth, Math.min(ante, cfg.metaSplitAnte) - 1);
+  const late = Math.pow(cfg.metaGrowthLate, Math.max(0, ante - cfg.metaSplitAnte));
+  return Math.round(cfg.metaBase * early * late * cfg.metaRodada[rodada - 1]!);
 }

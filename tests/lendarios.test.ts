@@ -9,7 +9,7 @@ describe('lendários', () => {
     expect(sem.disparos).toBe(1);
     const com = resolve(rv([[0, 1, 'fantasma'], [2, 1, 'celula'], [4, 1, 'faisca']]));
     expect(com.disparos).toBe(3); // atravessou (1,1) e (3,1) vazias
-    expect(com.pontos).toBe(5 + 10 + 6);
+    expect(com.pontos).toBe(5 + 10 + 8);
   });
 
   it('fantasma vale mesmo fora do caminho do pulso', () => {
@@ -35,13 +35,13 @@ describe('lendários', () => {
   it('singularidade: mult ×3', () => {
     const r = resolve(rv([[0, 1, 'faisca'], [1, 1, 'singularidade'], [2, 1, 'faisca']]));
     expect(r.mult).toBe(3);
-    expect(r.score).toBe(36);
+    expect(r.score).toBe(48);
   });
 
   it('reator: +8 +1/ficha guardada, emite nas 4 ortogonais', () => {
     const r = resolve(rv([[0, 1, 'reator'], [1, 1, 'faisca'], [0, 2, 'faisca'], [0, 0, 'faisca']], 10));
     expect(r.disparos).toBe(4);
-    expect(r.pontos).toBe(18 + 6 * 3);
+    expect(r.pontos).toBe(18 + 8 * 3);
   });
 
   it('midas: aumentos de mult geram fichas (cap 8)', () => {

@@ -62,10 +62,28 @@ export class Run implements RunView {
     this.emitterId = opts.emitterId ?? 'mk1';
     const em = emitterById(this.emitterId);
     this.fichas = em.fichasIniciais;
-    this.mao = [...em.maoInicial];
+    // tokens 'ger_comum'/'cond_comum' viram sorteios seedados — cada run começa com um kit diferente
+    const KIT_RETOS = ['faisca', 'celula', 'resistor'];
+    const KIT_GERADORES = [...KIT_RETOS, 'agulha', 'dinamo', 'bobina'];
+    const KIT_CONDUTORES = ['cano', 'cotovelo_d', 'cotovelo_e', 'trilho'];
+    let primeiroGer = true;
+    this.mao = em.maoInicial.map((id) => {
+      if (id === 'ger_comum') {
+        // o 1º gerador do kit é sempre de emissão reta (kits 100% diagonais são armadilha)
+        const pool = primeiroGer ? KIT_RETOS : KIT_GERADORES;
+        primeiroGer = false;
+        return this.rng.pick(pool);
+      }
+      if (id === 'cond_comum') return this.rng.pick(KIT_CONDUTORES);
+      return id;
+    });
     this.placementsLeft = this.placementsBase();
     this.pool = opts.pool ?? [];
-    this.mutadoresRun = this.rng.shuffle(MUTATORS.map((m) => m.id)).slice(0, this.cfg.antes);
+    // chefes: mutadores brandos nos antes 1-2, os duros vêm depois (mortes cedo por sorteio não são interessantes)
+    const brandos = ['curto_circuito', 'sobrecarga', 'pedagio', 'imposto', 'teto', 'escassez'];
+    const suaves = this.rng.shuffle(MUTATORS.filter((m) => brandos.includes(m.id)).map((m) => m.id));
+    const duros = this.rng.shuffle(MUTATORS.filter((m) => !brandos.includes(m.id)).map((m) => m.id));
+    this.mutadoresRun = [suaves[0]!, suaves[1]!, ...this.rng.shuffle([...suaves.slice(2), ...duros])].slice(0, this.cfg.antes);
   }
 
   get meta(): number {
@@ -105,8 +123,9 @@ export class Run implements RunView {
     if (m?.tetoMult !== undefined) mods.tetoMult = m.tetoMult;
     if (m?.apagao) mods.apagao = true;
     if (this.blockedCells.size > 0) mods.blockedCells = this.blockedCells;
-    if (this.relics.includes('metronomo')) mods.finalMultAdd = [{ minCadeia: 8, add: 0.5 }];
-    if (this.relics.includes('prisma_bruto')) mods.finalMultMul = [{ minCadeia: 10, mul: 1.25 }];
+    if (this.relics.includes('ressonancia')) mods.condutor2x = true;
+    if (this.relics.includes('metronomo')) mods.finalMultAdd = [{ minCadeia: 8, add: 1.5 }];
+    if (this.relics.includes('prisma_bruto')) mods.finalMultMul = [{ minCadeia: 10, mul: 1.6 }];
     return mods;
   }
 
@@ -124,9 +143,10 @@ export class Run implements RunView {
     return { antes, depois: this.simular(g).score };
   }
 
-  podePosicionar(maoIdx: number, cell: number): boolean {
+  podePosicionar(maoIdx: number, cell: number, ignorarOcupada = false): boolean {
     if (this.status !== 'construindo' || this.placementsLeft <= 0) return false;
-    if (maoIdx < 0 || maoIdx >= this.mao.length || this.grid[cell]) return false;
+    if (maoIdx < 0 || maoIdx >= this.mao.length) return false;
+    if (this.grid[cell] && !ignorarOcupada) return false;
     if (this.blockedCells.has(cell)) return false;
     const m = this.ehChefe ? this.mutadorAtual : null;
     if (m?.bloqueiaColunasDireita && cellX(cell) >= GRID_W - 2) return false;
@@ -228,10 +248,14 @@ export class Run implements RunView {
   private sortearSimbolo(exclude: string[]): string {
     const pesos = this.pesosRaridade();
     const candidatos = this.pool.filter((id) => !exclude.includes(id));
-    const total = candidatos.reduce((s, id) => s + pesos[getSymbol(id).raridade], 0);
+    const possuidos = new Set<string>(this.mao);
+    for (const p of this.grid) if (p) possuidos.add(p.id);
+    // a loja conhece sua máquina: o que você já possui aparece mais (builds com duplicatas)
+    const peso = (id: string) => pesos[getSymbol(id).raridade] * (possuidos.has(id) ? 2.2 : 1);
+    const total = candidatos.reduce((s, id) => s + peso(id), 0);
     let r = this.rng.next() * total;
     for (const id of candidatos) {
-      r -= pesos[getSymbol(id).raridade];
+      r -= peso(id);
       if (r <= 0) return id;
     }
     return candidatos[candidatos.length - 1]!;
@@ -347,5 +371,32 @@ export class Run implements RunView {
     const out: SymbolDef[] = [];
     for (const p of this.grid) if (p) out.push(getSymbol(p.id));
     return out;
+  }
+
+  /** cópia profunda para rollouts de bots — RNG clonado no mesmo estado */
+  clone(): Run {
+    const c = new Run(this.seedStr, { emitterId: this.emitterId, pool: this.pool, cfg: this.cfg });
+    c.rng = Rng.fromState(this.rng.getState());
+    c.ante = this.ante;
+    c.rodada = this.rodada;
+    c.grid = this.grid.map((p) => (p ? { ...p } : null));
+    c.mao = [...this.mao];
+    c.fichas = this.fichas;
+    c.relics = [...this.relics];
+    c.status = this.status;
+    c.placementsLeft = this.placementsLeft;
+    c.remocoesUsadas = this.remocoesUsadas;
+    c.mutadoresRun = [...this.mutadoresRun];
+    c.mutadorAtual = this.mutadorAtual;
+    c.blockedCells = new Set(this.blockedCells);
+    c.skipNextShop = this.skipNextShop;
+    c.papeisNaRodada = new Set(this.papeisNaRodada);
+    c.rerollGratis = this.rerollGratis;
+    c.rerollCount = this.rerollCount;
+    c.comprasNaLoja = this.comprasNaLoja;
+    c.shop = { symbols: [...this.shop.symbols], relic: this.shop.relic, rerollCost: this.shop.rerollCost };
+    c.anteInfinito = this.anteInfinito;
+    c.stats = { ...this.stats, comprados: [...this.stats.comprados] };
+    return c;
   }
 }

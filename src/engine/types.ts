@@ -57,6 +57,8 @@ export interface Resolucao {
   rerollGratis: boolean;
   /** deltas de `mem` por célula — resolve() é puro; a run comita após resolução real */
   memDeltas: number[];
+  /** células vazias alcançadas por pulsos — a "fronteira" expansível da máquina */
+  fronteira: number[];
   score: number; // preenchido ao final: round(pontos × mult), com relíquias finais
 }
 
@@ -114,6 +116,7 @@ export interface ResolveMods {
   emitters?: readonly { x: number; y: number; dir: Dir }[];
   potenciaInicial?: number;
   apagao?: boolean; // 1º elo não dispara
+  condutor2x?: boolean; // relíquia ressonância: condutores disparam 2×/cascata
   tetoMult?: number;
   /** bônus de pontos-base por papel (relíquias lente_polida/turbina) */
   bonusPapel?: Partial<Record<Papel, number>>;

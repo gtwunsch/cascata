@@ -10,10 +10,11 @@ export const RELICS: readonly RelicDef[] = [
   { id: 'cupom', nome: 'Cupom', custo: 6, desc: 'O 1º item comprado em cada loja custa 2 a menos.' },
   { id: 'reciclagem', nome: 'Reciclagem', custo: 7, desc: 'Remover símbolos da grade é sempre grátis.' },
   { id: 'turbina', nome: 'Turbina', custo: 8, desc: 'Condutores dão +3 pontos ao disparar.' },
-  { id: 'metronomo', nome: 'Metrônomo', custo: 9, desc: 'Se a maior cadeia chegou a 8 elos: mult +0.5 no final.' },
+  { id: 'metronomo', nome: 'Metrônomo', custo: 9, desc: 'Se a maior cadeia chegou a 8 elos: mult +1.5 no final.' },
   { id: 'cofre', nome: 'Cofre', custo: 7, desc: '+2 fichas por rodada vencida.' },
-  { id: 'prisma_bruto', nome: 'Prisma Bruto', custo: 10, desc: 'Se a maior cadeia chegou a 10 elos: mult ×1.25 no final.' },
+  { id: 'prisma_bruto', nome: 'Prisma Bruto', custo: 10, desc: 'Se a maior cadeia chegou a 10 elos: mult ×1.6 no final.' },
   { id: 'faro', nome: 'Faro', custo: 7, desc: 'A loja passa a oferecer 4 símbolos.' },
+  { id: 'ressonancia', nome: 'Ressonância', custo: 10, desc: 'Condutores podem disparar 2× por cascata.' },
 ];
 
 export function relicById(id: string): RelicDef {

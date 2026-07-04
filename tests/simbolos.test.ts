@@ -17,23 +17,26 @@ describe('emissões e potência', () => {
 
   it('trilho soma potência (+0.3)', () => {
     const r = resolve(rv([[0, 1, 'trilho'], [1, 1, 'faisca']]));
-    expect(r.pontos).toBeCloseTo(2 + 6 * 1.3);
+    expect(r.pontos).toBeCloseTo(2 + 8 * 1.3);
   });
 
-  it('acelerador multiplica potência (×1.5)', () => {
+  it('acelerador multiplica potência (×1.3)', () => {
     const r = resolve(rv([[0, 1, 'acelerador'], [1, 1, 'celula']]));
-    expect(r.pontos).toBeCloseTo(15);
+    expect(r.pontos).toBeCloseTo(13);
   });
 
   it('resistor pontua alto mas degrada a potência (×0.8)', () => {
     const r = resolve(rv([[0, 1, 'resistor'], [1, 1, 'faisca']]));
-    expect(r.pontos).toBeCloseTo(14 + 4.8);
+    expect(r.pontos).toBeCloseTo(16 + 8 * 0.85);
   });
 
-  it('capacitor termina o ramo', () => {
-    const r = resolve(rv([[0, 1, 'capacitor'], [1, 1, 'faisca']]));
+  it('capacitor termina o ramo e cresce a cada cascata (mem)', () => {
+    const view = rv([[0, 1, 'capacitor'], [1, 1, 'faisca']]);
+    const r = resolve(view);
     expect(r.disparos).toBe(1);
-    expect(r.score).toBe(18);
+    expect(r.score).toBe(16);
+    view.grid[at(0, 1)]!.mem += r.memDeltas[at(0, 1)]!;
+    expect(resolve(view).score).toBe(18);
   });
 
   it('geiser emite para cima e para baixo (absolutas)', () => {
@@ -48,9 +51,9 @@ describe('emissões e potência', () => {
     expect(r.disparosPorCelula[at(1, 2)]).toBe(1);
   });
 
-  it('hidra duplica com potência ×1.3', () => {
+  it('hidra duplica com potência ×1.35', () => {
     const r = resolve(rv([[0, 1, 'hidra'], [1, 0, 'faisca'], [1, 2, 'faisca']]));
-    expect(r.pontos).toBeCloseTo(6 * 1.3 * 2);
+    expect(r.pontos).toBeCloseTo(8 * 1.35 * 2);
   });
 
   it('portal reinjeta o pulso no emissor mantendo a cadeia', () => {
@@ -62,7 +65,7 @@ describe('emissões e potência', () => {
 
   it('vela escala com elos percorridos', () => {
     const r = resolve(rv([[0, 1, 'cano'], [1, 1, 'vela']]));
-    expect(r.pontos).toBe(2 + 7);
+    expect(r.pontos).toBe(4 + 8); // cano d1 (+4) + vela d2 (4+4)
   });
 
   it('ziguezague alterna direção entre disparos (mem)', () => {
@@ -91,21 +94,21 @@ describe('gatilhos condicionais', () => {
     expect(perto.disparos).toBe(0);
     const longe = resolve(rv([[0, 1, 'cano'], [1, 1, 'cano'], [2, 1, 'cano'], [3, 1, 'usina']]));
     expect(longe.eventos.at(-1)!.symbolId).toBe('usina');
-    expect(longe.pontos).toBe(6 + 25);
+    expect(longe.pontos).toBe(4 + 5 + 6 + 28); // canos d1-3 com kicker de elo
   });
 
-  it('sensor: +20 só no 5º elo ou além', () => {
+  it('sensor: só dispara bônus do 4º elo ou além', () => {
     const cedo = resolve(rv([[0, 1, 'sensor']]));
     expect(cedo.pontos).toBe(0);
     const tarde = resolve(rv([[0, 1, 'cano'], [1, 1, 'cano'], [2, 1, 'cano'], [3, 1, 'cano'], [4, 1, 'sensor']]));
-    expect(tarde.pontos).toBe(8 + 20);
+    expect(tarde.pontos).toBeCloseTo(4 + 5 + 6 + 7 + 22 * 1.26); // canos d1-4 + sensor d5 (crescendo só do 5º elo)
   });
 
-  it('valvula exige mult ≥ 2', () => {
-    const baixo = resolve(rv([[0, 1, 'lente_x'], [1, 1, 'valvula']]));
+  it('valvula exige mult ≥ 1.5', () => {
+    const baixo = resolve(rv([[0, 1, 'valvula']]));
     expect(baixo.pontos).toBe(0);
-    const alto = resolve(rv([[0, 1, 'lente_x'], [1, 1, 'lente_x'], [2, 1, 'valvula']]));
-    expect(alto.pontos).toBe(15);
+    const alto = resolve(rv([[0, 1, 'lente_x'], [1, 1, 'valvula']]));
+    expect(alto.pontos).toBe(20);
   });
 
   it('rele: mult +0.8 com 3+ geradores disparados', () => {
@@ -114,8 +117,8 @@ describe('gatilhos condicionais', () => {
   });
 
   it('disjuntor: +30 com potência ≥ 2', () => {
-    const r = resolve(rv([[0, 1, 'acelerador'], [1, 1, 'acelerador'], [2, 1, 'disjuntor']]));
-    expect(r.pontos).toBeCloseTo(30 * 2.25);
+    const r = resolve(rv([[0, 1, 'trilho'], [1, 1, 'acelerador'], [2, 1, 'acelerador'], [3, 1, 'disjuntor']]));
+    expect(r.pontos).toBeCloseTo(2 + 30 * 1.3 * 1.3 * 1.3);
   });
 
   it('cronometro duplica em elos pares', () => {
@@ -135,15 +138,15 @@ describe('gatilhos condicionais', () => {
     expect(r.mult).toBeCloseTo(1.5);
   });
 
-  it('simbiose: +8 por papel distinto já disparado', () => {
+  it('simbiose: +10 por papel distinto já disparado', () => {
     const r = resolve(rv([[0, 1, 'faisca'], [1, 1, 'cano'], [2, 1, 'lente_x'], [3, 1, 'simbiose']]));
     // papéis JÁ disparados: gerador, condutor, amplificador (a própria simbiose não se conta)
-    expect(r.pontos).toBe(6 + 2 + 8 * 3);
+    expect(r.pontos).toBe(8 + 5 + 10 * 3); // faisca 8 + cano d2 (4+1) + 30
   });
 
-  it('forja: +6 por amplificador já disparado', () => {
+  it('forja: +7 por amplificador já disparado', () => {
     const r = resolve(rv([[0, 1, 'lente_x'], [1, 1, 'forja']]));
-    expect(r.pontos).toBe(16);
+    expect(r.pontos).toBe(17);
   });
 
   it('ressonador: mult +0.25 por condutor disparado', () => {
@@ -151,14 +154,14 @@ describe('gatilhos condicionais', () => {
     expect(r.mult).toBeCloseTo(1.5);
   });
 
-  it('gravitacional: mult +0.5 por gerador disparado', () => {
+  it('gravitacional: mult +0.4 por gerador disparado', () => {
     const r = resolve(rv([[0, 1, 'faisca'], [1, 1, 'faisca'], [2, 1, 'gravitacional']]));
-    expect(r.mult).toBeCloseTo(2);
+    expect(r.mult).toBeCloseTo(1.8);
   });
 
   it('avalanche exige 10+ disparos', () => {
     const r = resolve(rv([[0, 1, 'faisca'], [1, 1, 'avalanche']]));
-    expect(r.pontos).toBe(6);
+    expect(r.pontos).toBe(8);
     expect(r.mult).toBe(1);
   });
 });
@@ -167,7 +170,7 @@ describe('econômicos', () => {
   it('moeda gera 1 ficha', () => {
     const r = resolve(rv([[0, 1, 'moeda']]));
     expect(r.fichas).toBe(1);
-    expect(r.pontos).toBe(2);
+    expect(r.pontos).toBe(5);
   });
 
   it('cofrinho paga ficha só do 4º elo em diante', () => {

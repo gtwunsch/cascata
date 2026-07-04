@@ -15,8 +15,10 @@ function novaRun(seed = 'TESTE1'): Run {
 describe('início de run e posicionamento', () => {
   it('começa com a mão e as fichas do emissor MK-1', () => {
     const r = novaRun();
-    expect(r.mao).toEqual(['faisca', 'celula', 'cano']);
-    expect(r.fichas).toBe(6);
+    expect(r.mao.length).toBe(3); // kit sorteado por seed: 2 geradores comuns + 1 condutor comum
+    expect(r.fichas).toBe(10);
+    const novaMesmaSeed = novaRun();
+    expect(novaMesmaSeed.mao).toEqual(r.mao); // determinístico por seed
     expect(r.placementsLeft).toBe(3);
     expect(r.ante).toBe(1);
     expect(r.rodada).toBe(1);
@@ -26,7 +28,7 @@ describe('início de run e posicionamento', () => {
     const r = novaRun();
     expect(r.posicionar(0, at(0, 1))).toBe(true);
     expect(r.mao.length).toBe(2);
-    expect(r.grid[at(0, 1)]!.id).toBe('faisca');
+    expect(r.grid[at(0, 1)]).not.toBeNull();
     expect(r.placementsLeft).toBe(2);
   });
 
@@ -46,10 +48,10 @@ describe('início de run e posicionamento', () => {
     r.posicionar(0, at(1, 1));
     expect(r.custoRemocao()).toBe(0);
     expect(r.remover(at(0, 1))).toBe(true);
-    expect(r.fichas).toBe(6);
+    expect(r.fichas).toBe(10);
     expect(r.custoRemocao()).toBe(2);
     expect(r.remover(at(1, 1))).toBe(true);
-    expect(r.fichas).toBe(4);
+    expect(r.fichas).toBe(8);
   });
 
   it('preview de impacto reporta delta sem mutar a run (§3.1)', () => {
@@ -65,36 +67,36 @@ describe('início de run e posicionamento', () => {
 describe('resolução e economia (§4.4)', () => {
   it('score abaixo da meta → derrota', () => {
     const r = novaRun();
-    r.resolver(); // grade vazia: score 0 < 40
+    r.resolver(); // grade vazia: score 0 < meta
     expect(r.status).toBe('derrota');
   });
 
   it('bater a meta paga base + cadeia + juros e abre a loja', () => {
     const r = novaRun();
-    r.posicionar(0, at(0, 1)); // faisca 6
-    r.posicionar(0, at(1, 1)); // celula 10
-    // insuficiente para meta 40 — monta com mult
-    r.grid[at(2, 1)] = { id: 'duplicador', mem: 0 };
-    r.grid[at(3, 1)] = { id: 'celula', mem: 0 };
+    const meta = r.meta;
+    r.grid[at(0, 1)] = { id: 'faisca', mem: 0 }; // 8
+    r.grid[at(1, 1)] = { id: 'celula', mem: 0 }; // 10 → 18 pontos, cadeia 2
     const res = r.resolver();
-    expect(res.score).toBeGreaterThanOrEqual(40);
+    expect(res.score).toBeGreaterThanOrEqual(meta);
+    expect(res.score).toBeLessThan(3 * meta); // sem overflow neste cenário
     expect(r.status).toBe('loja');
-    // fichas: 6 iniciais + base 4 + cadeia 4 + juros floor(6/5)=1
-    expect(r.fichas).toBe(6 + 4 + 4 + 1);
+    // fichas: 6 iniciais + base + cadeia 2 + juros floor(6/5)=1
+    expect(r.fichas).toBe(10 + r.cfg.fichasBase + 2 + 2);
   });
 
   it('overflow (≥3× meta) paga fichas extras (F6, D8)', () => {
     const r = novaRun();
+    const meta = r.meta;
     r.grid[at(0, 1)] = { id: 'celula', mem: 0 };
     r.grid[at(1, 1)] = { id: 'celula', mem: 0 };
     r.grid[at(2, 1)] = { id: 'celula', mem: 0 };
     r.grid[at(3, 1)] = { id: 'singularidade', mem: 0 };
     r.grid[at(4, 1)] = { id: 'celula', mem: 0 };
     const res = r.resolver();
-    expect(res.score).toBeGreaterThanOrEqual(3 * 40); // 40 pontos × mult 3 = 120
-    const base = 4 + 5 + 1;
-    const overflow = Math.min(8, Math.floor(res.score / 40));
-    expect(r.fichas).toBe(6 + base + overflow);
+    expect(res.score).toBeGreaterThanOrEqual(3 * meta); // 40 pontos × mult 3 = 120
+    const base = r.cfg.fichasBase + 5 + 2;
+    const overflow = Math.min(8, Math.floor(res.score / meta));
+    expect(r.fichas).toBe(10 + base + overflow);
   });
 
   it('derrota não paga fichas (nem as de símbolos econômicos)', () => {
@@ -102,7 +104,7 @@ describe('resolução e economia (§4.4)', () => {
     r.grid[at(0, 1)] = { id: 'moeda', mem: 0 };
     r.resolver();
     expect(r.status).toBe('derrota');
-    expect(r.fichas).toBe(6); // derrota: nada é pago
+    expect(r.fichas).toBe(10); // derrota: nada é pago
   });
 });
 
@@ -161,12 +163,14 @@ describe('loja (§3.2, F5)', () => {
 });
 
 describe('metas, chefes e vitória (§3.3, §4.5)', () => {
-  it('a meta escala geometricamente', () => {
-    expect(metaDaRodada(DEFAULT_CONFIG, 1, 1)).toBe(40);
-    expect(metaDaRodada(DEFAULT_CONFIG, 1, 2)).toBe(60);
-    expect(metaDaRodada(DEFAULT_CONFIG, 1, 3)).toBe(88);
-    expect(metaDaRodada(DEFAULT_CONFIG, 2, 1)).toBe(84);
-    expect(metaDaRodada(DEFAULT_CONFIG, 8, 3)).toBeGreaterThan(10000);
+  it('a meta escala geometricamente (§4.5)', () => {
+    const c = DEFAULT_CONFIG;
+    expect(metaDaRodada(c, 1, 1)).toBe(Math.round(c.metaBase));
+    expect(metaDaRodada(c, 1, 2)).toBe(Math.round(c.metaBase * c.metaRodada[1]));
+    expect(metaDaRodada(c, 1, 3)).toBe(Math.round(c.metaBase * c.metaRodada[2]));
+    expect(metaDaRodada(c, 2, 1)).toBe(Math.round(c.metaBase * c.metaGrowth));
+    // crescimento geométrico: ante 8 é ordens de magnitude acima do ante 1
+    expect(metaDaRodada(c, 8, 3) / metaDaRodada(c, 1, 1)).toBeGreaterThan(50);
   });
 
   it('rodada 3 é chefe com mutador; os 8 mutadores da run são únicos', () => {
@@ -179,7 +183,7 @@ describe('metas, chefes e vitória (§3.3, §4.5)', () => {
   });
 
   it('vencer ante 8 rodada 3 → vitória', () => {
-    const r = new Run('FIM', { pool: POOL, cfg: { ...DEFAULT_CONFIG, metaBase: 1, metaGrowth: 1 } });
+    const r = new Run('FIM', { pool: POOL, cfg: { ...DEFAULT_CONFIG, metaBase: 1, metaGrowth: 1, metaGrowthLate: 1 } });
     r.ante = 8;
     r.rodada = 3;
     r.grid[at(0, 1)] = { id: 'celula', mem: 0 };

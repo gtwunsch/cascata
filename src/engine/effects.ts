@@ -5,9 +5,14 @@ import type { EmitOut, TriggerCtx } from './types';
 
 export const MIDAS_CAP = 8;
 
-/** pontos de disparo: base × potência (bônus de papel é aplicado pelo resolve) */
+/** Crescendo (F3): elos além do 4º pontuam +26% por elo extra — profundidade paga */
+export const CRESCENDO_A_PARTIR = 4;
+export const CRESCENDO_BONUS = 0.26;
+
+/** pontos de disparo: base × potência × crescendo (bônus de papel é aplicado pelo resolve) */
 export function addPontos(ctx: TriggerCtx, base: number): void {
-  ctx.res.pontos += base * ctx.potencia;
+  const crescendo = 1 + CRESCENDO_BONUS * Math.max(0, ctx.depth - CRESCENDO_A_PARTIR);
+  ctx.res.pontos += base * ctx.potencia * crescendo;
 }
 
 function midasHook(ctx: TriggerCtx): void {

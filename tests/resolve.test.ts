@@ -15,7 +15,7 @@ describe('propagação básica', () => {
     const r = resolve(rv([[0, 1, 'faisca']]));
     expect(r.disparos).toBe(1);
     expect(r.eventos[0]!.potencia).toBe(1);
-    expect(r.score).toBe(6);
+    expect(r.score).toBe(8);
   });
 
   it('símbolo fora do caminho do pulso não dispara', () => {
@@ -26,19 +26,19 @@ describe('propagação básica', () => {
   it('célula vazia interrompe o ramo (§4.3.3)', () => {
     const r = resolve(rv([[0, 1, 'faisca'], [2, 1, 'celula']]));
     expect(r.disparos).toBe(1);
-    expect(r.score).toBe(6);
+    expect(r.score).toBe(8);
   });
 
   it('cadeia contígua dispara em sequência e soma pontos', () => {
     const r = resolve(rv([[0, 1, 'faisca'], [1, 1, 'celula']]));
     expect(r.disparos).toBe(2);
-    expect(r.score).toBe(16);
+    expect(r.score).toBe(18);
     expect(r.maxCadeia).toBe(2);
   });
 
   it('potência inicial multiplica pontos (mods.potenciaInicial)', () => {
     const r = resolve(rv([[0, 1, 'faisca']]), { potenciaInicial: 2 });
-    expect(r.score).toBe(12);
+    expect(r.score).toBe(26); // faísca: (8+5 com potência ≥1.5) × 2
   });
 
   it('cada símbolo dispara no máximo 1x por resolução (§4.3.4)', () => {
@@ -62,15 +62,15 @@ describe('propagação básica', () => {
 
   it('pontuação = pontos × mult (§4.3.6)', () => {
     const r = resolve(rv([[0, 1, 'faisca'], [1, 1, 'lente_x'], [2, 1, 'faisca']]));
-    expect(r.pontos).toBe(12);
-    expect(r.mult).toBe(1.5);
-    expect(r.score).toBe(18);
+    expect(r.pontos).toBe(16);
+    expect(r.mult).toBeCloseTo(1.7);
+    expect(r.score).toBe(27);
   });
 
   it('scoreParcial dos eventos sobe elo a elo (F3)', () => {
     const r = resolve(rv([[0, 1, 'faisca'], [1, 1, 'faisca'], [2, 1, 'faisca']]));
     const parciais = r.eventos.map((e) => e.scoreParcial);
-    expect(parciais).toEqual([6, 12, 18]);
+    expect(parciais).toEqual([8, 16, 24]);
   });
 });
 
@@ -78,7 +78,7 @@ describe('duplicação e ordem determinística (§4.3.5, D7)', () => {
   it('divisor duplica para as 2 diagonais frontais', () => {
     const r = resolve(rv([[0, 1, 'divisor'], [1, 0, 'faisca'], [1, 2, 'faisca']]));
     expect(r.disparos).toBe(3);
-    expect(r.score).toBe(12);
+    expect(r.score).toBe(Math.round(4 + 2 * 8 * 0.8));
   });
 
   it('pulsos duplicados resolvem cima→baixo', () => {
@@ -142,7 +142,7 @@ describe('modificadores de resolução (mutadores §4.6)', () => {
   it('teto de mult limita durante e no final', () => {
     const r = resolve(rv([[0, 1, 'duplicador'], [1, 1, 'duplicador'], [2, 1, 'faisca']]), { tetoMult: 1.5 });
     expect(r.mult).toBe(1.5);
-    expect(r.score).toBe(9);
+    expect(r.score).toBe(12);
   });
 
   it('emissor espelhado (mutador espelho): entra pela direita', () => {
@@ -154,12 +154,12 @@ describe('modificadores de resolução (mutadores §4.6)', () => {
 
   it('bônus de papel (relíquias) soma aos pontos do disparo', () => {
     const r = resolve(rv([[0, 1, 'faisca']]), { bonusPapel: { gerador: 4 } });
-    expect(r.score).toBe(10);
+    expect(r.score).toBe(12);
   });
 
   it('finalMultAdd (metrônomo) só aplica com cadeia mínima', () => {
     const semCadeia = resolve(rv([[0, 1, 'faisca']]), { finalMultAdd: [{ minCadeia: 8, add: 0.5 }] });
-    expect(semCadeia.score).toBe(6);
+    expect(semCadeia.score).toBe(8);
     const linha8: [number, number, string][] = [];
     for (let x = 0; x < 5; x++) linha8.push([x, 1, 'cano']);
     // cotovelos para estender a cadeia além de 8: (4,1) vira para baixo e volta
