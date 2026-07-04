@@ -29,9 +29,9 @@ export interface RunConfig {
 export const DEFAULT_CONFIG: RunConfig = {
   metaBase: 10,
   metaGrowth: 1.52,
-  metaGrowthLate: 3.8,
+  metaGrowthLate: 4.4,
   metaSplitAnte: 5,
-  metaRodada: [1.0, 1.45, 2.1],
+  metaRodada: [1.0, 1.45, 2.2],
   antes: 8,
   fichasBase: 6,
   fichasCadeiaCap: 12,

@@ -5,9 +5,9 @@ import type { EmitOut, TriggerCtx } from './types';
 
 export const MIDAS_CAP = 8;
 
-/** Crescendo (F3): elos além do 4º pontuam +26% por elo extra — profundidade paga */
+/** Crescendo (F3): elos além do 4º pontuam +30% por elo extra — profundidade paga */
 export const CRESCENDO_A_PARTIR = 4;
-export const CRESCENDO_BONUS = 0.26;
+export const CRESCENDO_BONUS = 0.30;
 
 /** pontos de disparo: base × potência × crescendo (bônus de papel é aplicado pelo resolve) */
 export function addPontos(ctx: TriggerCtx, base: number): void {

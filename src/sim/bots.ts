@@ -51,7 +51,7 @@ function qualidade(run: Run, grid?: (PlacedSymbol | null)[]): number {
   const futuro = Math.min(1.3, ratioNext) * 7 + Math.min(2, Math.max(0, ratioNext - 1.3)) * 1.5;
   // fronteira = células vazias alcançadas pelo pulso: expansibilidade da máquina
   const abertura = Math.min(4, res.fronteira.length) * 1.8;
-  const bonusCadeia = (res.maxCadeia >= 10 ? 6 : 0) + Math.min(run.cfg.fichasCadeiaCap, res.maxCadeia) * 0.5; // payout de fichas/cadeia // cadeia 2 dígitos: fichas no cap + relíquias de cadeia
+  const bonusCadeia = (res.maxCadeia >= 10 ? 8 : 0) + Math.min(run.cfg.fichasCadeiaCap, res.maxCadeia) * 0.5; // payout de fichas/cadeia // cadeia 2 dígitos: fichas no cap + relíquias de cadeia
   return sobrevive + futuro + abertura + rowsUsed.size * 1.4 + Math.min(res.maxCadeia, 16) * 1.5 + bonusCadeia + (res.mult - 1) * 1.2 + res.disparos * 0.2 + res.fichas * 0.25;
 }
 
@@ -130,7 +130,7 @@ const guloso: Bot = {
       if (!run.comprar(bestIdx)) break;
     }
     // relíquias que pagam já (ganância): mais pontos ou mais posicionamentos imediatos
-    const IMEDIATAS = ['braco_extra', 'lente_polida', 'turbina', 'bateria'];
+    const IMEDIATAS = ['ressonancia', 'braco_extra', 'lente_polida', 'turbina', 'bateria'];
     if (run.shop.relic && IMEDIATAS.includes(run.shop.relic) && run.fichas >= 12) run.comprarRelic();
     run.fecharLoja();
   },
@@ -198,6 +198,10 @@ const sinergia: Bot = {
   },
   loja(run, rng) {
     let rerolls = 0;
+    // relíquias de topo compram cedo (ressonância/braço são motores de run)
+    if (run.shop.relic && RELIC_PRIORIDADE.indexOf(run.shop.relic) < 3 && run.fichas >= 16) {
+      run.comprarRelic();
+    }
     for (let guard = 0; guard < 14; guard++) {
       const qBase = qualidade(run);
       // 1) melhor símbolo comprável (símbolos têm prioridade sobre relíquias);

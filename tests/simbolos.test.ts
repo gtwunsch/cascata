@@ -94,14 +94,14 @@ describe('gatilhos condicionais', () => {
     expect(perto.disparos).toBe(0);
     const longe = resolve(rv([[0, 1, 'cano'], [1, 1, 'cano'], [2, 1, 'cano'], [3, 1, 'usina']]));
     expect(longe.eventos.at(-1)!.symbolId).toBe('usina');
-    expect(longe.pontos).toBe(4 + 5 + 6 + 28); // canos d1-3 com kicker de elo
+    expect(longe.pontos).toBe(4 + 6 + 8 + 28); // canos d1-3 com kicker de elo
   });
 
   it('sensor: só dispara bônus do 4º elo ou além', () => {
     const cedo = resolve(rv([[0, 1, 'sensor']]));
     expect(cedo.pontos).toBe(0);
     const tarde = resolve(rv([[0, 1, 'cano'], [1, 1, 'cano'], [2, 1, 'cano'], [3, 1, 'cano'], [4, 1, 'sensor']]));
-    expect(tarde.pontos).toBeCloseTo(4 + 5 + 6 + 7 + 22 * 1.26); // canos d1-4 + sensor d5 (crescendo só do 5º elo)
+    expect(tarde.pontos).toBeCloseTo(4 + 6 + 8 + 10 + 22 * 1.3); // canos d1-4 + sensor d5 (crescendo só do 5º elo)
   });
 
   it('valvula exige mult ≥ 1.5', () => {
@@ -138,10 +138,10 @@ describe('gatilhos condicionais', () => {
     expect(r.mult).toBeCloseTo(1.5);
   });
 
-  it('simbiose: +10 por papel distinto já disparado', () => {
+  it('simbiose: +12 por papel distinto já disparado', () => {
     const r = resolve(rv([[0, 1, 'faisca'], [1, 1, 'cano'], [2, 1, 'lente_x'], [3, 1, 'simbiose']]));
     // papéis JÁ disparados: gerador, condutor, amplificador (a própria simbiose não se conta)
-    expect(r.pontos).toBe(8 + 5 + 10 * 3); // faisca 8 + cano d2 (4+1) + 30
+    expect(r.pontos).toBe(8 + 6 + 12 * 3); // faisca 8 + cano d2 (4+2) + 36
   });
 
   it('forja: +7 por amplificador já disparado', () => {

@@ -57,8 +57,8 @@ const defs: SymbolDef[] = [
   },
   {
     id: 'funil', nome: 'Funil', raridade: 'incomum', custo: 5, papel: 'condutor',
-    desc: '+4 pontos, +1 por elo já percorrido. Vira o pulso rumo ao centro da grade.',
-    onTrigger: (c) => addPontos(c, 4 + (c.depth - 1)),
+    desc: '+4 pontos, +2 por elo já percorrido. Vira o pulso rumo ao centro da grade.',
+    onTrigger: (c) => addPontos(c, 4 + 2 * (c.depth - 1)),
     emitir: (_d, c) => [{ dir: Math.floor(c.cell / 5) <= 1 ? 2 : 6 }],
   },
 

@@ -66,8 +66,8 @@ const defs: SymbolDef[] = [
   // ---- CONDUTORES (7) ----
   {
     id: 'cano', nome: 'Cano', raridade: 'comum', custo: 3, papel: 'condutor',
-    desc: '+4 pontos, +1 por elo já percorrido. Continua reto.',
-    onTrigger: (c) => addPontos(c, 4 + (c.depth - 1)),
+    desc: '+4 pontos, +2 por elo já percorrido. Continua reto.',
+    onTrigger: (c) => addPontos(c, 4 + 2 * (c.depth - 1)),
   },
   {
     id: 'cotovelo_d', nome: 'Cotovelo ⤵', raridade: 'comum', custo: 3, papel: 'condutor',
@@ -88,20 +88,20 @@ const defs: SymbolDef[] = [
   },
   {
     id: 'espelho_c', nome: 'Espelho', raridade: 'comum', custo: 3, papel: 'condutor',
-    desc: '+2 pontos, +1 por elo já percorrido. Reflete o pulso de volta.',
-    onTrigger: (c) => addPontos(c, 2 + (c.depth - 1)),
+    desc: '+2 pontos, +2 por elo já percorrido. Reflete o pulso de volta.',
+    onTrigger: (c) => addPontos(c, 2 + 2 * (c.depth - 1)),
     emitir: emVolta,
   },
   {
     id: 'trilho', nome: 'Trilho', raridade: 'comum', custo: 4, papel: 'condutor',
-    desc: '+2 pontos, +1 por elo já percorrido. Potência do pulso +0.3.',
-    onTrigger: (c) => addPontos(c, 2 + (c.depth - 1)),
+    desc: '+2 pontos, +2 por elo já percorrido. Potência do pulso +0.3.',
+    onTrigger: (c) => addPontos(c, 2 + 2 * (c.depth - 1)),
     emitir: (d) => [{ dir: d, potenciaAdd: 0.3 }],
   },
   {
     id: 'ziguezague', nome: 'Ziguezague', raridade: 'comum', custo: 4, papel: 'condutor',
-    desc: '+5 pontos, +1 por elo já percorrido. Alterna: vira à direita, depois à esquerda.',
-    onTrigger: (c) => addPontos(c, 5 + (c.depth - 1)),
+    desc: '+5 pontos, +2 por elo já percorrido. Alterna: vira à direita, depois à esquerda.',
+    onTrigger: (c) => addPontos(c, 5 + 2 * (c.depth - 1)),
     emitir: (d, c) => {
       const out = c.mem() % 2 === 0 ? emViraD(d) : emViraE(d);
       c.bumpMem(1);

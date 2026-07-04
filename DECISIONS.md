@@ -50,5 +50,18 @@ vazias; eco: cada símbolo dispara até 2×; nucleo: Emissor emite 2º pulso na 
 singularidade: ×3 mult; reator: emite nas 4 ortogonais e pontua por ficha guardada; midas:
 aumento de mult gera fichas.
 
+**D14 — Gate 2 parcial, deviação transparente.** Após 38 iterações e ~40k runs simuladas,
+6/9 critérios estáveis; cadeia≥10 (52.3% vs 60%) e diversidade (59% vs 45%) pendentes,
+com progresso monotônico documentado. Decisão: prosseguir para as Fases 3–5 (o usuário
+pediu jogabilidade nesta sessão) SEM afrouxar critérios — BALANCE_LOG.md guarda o estado
+exato, o harness é reproduzível (`npm run harness`), e o plano de fechamento está listado.
+Novas regras nascidas do balanceamento: **Crescendo** (elos 5+ pontuam +30%/elo),
+kicker de profundidade em condutores, relíquia Ressonância, kit inicial sorteado por seed,
+loja com viés para duplicatas, chefes brandos nos antes 1–2.
+
+**D15 — Crescendo como regra global.** `pontos = base × potência × (1 + 0.30 × max(0, elo-4))`.
+Nasceu no balanceamento para tornar profundidade competitiva com splits; vira elemento de
+identidade (a cascata cresce em crescendo — F3).
+
 **D13 — Grid persiste, placar zera.** O grid (a máquina) persiste entre rodadas e antes da
 mesma run. A pontuação de cada rodada é a de uma única resolução.

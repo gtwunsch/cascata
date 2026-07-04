@@ -14,14 +14,14 @@ const defs: SymbolDef[] = [
   },
   {
     id: 'fenda', nome: 'Fenda', raridade: 'raro', custo: 8, papel: 'gerador',
-    desc: '+34 pontos, mas o pulso sai com 60% da potência.',
-    onTrigger: (c) => addPontos(c, 34),
-    emitir: (d) => [{ dir: d, potenciaMul: 0.6 }],
+    desc: '+38 pontos, mas o pulso sai com 70% da potência.',
+    onTrigger: (c) => addPontos(c, 38),
+    emitir: (d) => [{ dir: d, potenciaMul: 0.7 }],
   },
   {
     id: 'colosso', nome: 'Colosso', raridade: 'raro', custo: 9, papel: 'gerador',
-    desc: '+45 pontos. Termina o ramo.',
-    onTrigger: (c) => addPontos(c, 45),
+    desc: '+55 pontos. Termina o ramo.',
+    onTrigger: (c) => addPontos(c, 55),
     emitir: emNada,
   },
 
@@ -66,11 +66,11 @@ const defs: SymbolDef[] = [
   },
   {
     id: 'simbiose', nome: 'Simbiose', raridade: 'raro', custo: 9, papel: 'gatilho',
-    desc: '+10 pontos por papel distinto já disparado nesta cascata.',
+    desc: '+12 pontos por papel distinto já disparado nesta cascata.',
     onTrigger: (c) => {
       let n = 0;
       for (const papel of PAPEIS) if (c.res.disparosPorPapel[papel] > 0) n++;
-      addPontos(c, 10 * n);
+      addPontos(c, 12 * n);
     },
   },
   {
