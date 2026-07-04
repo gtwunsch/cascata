@@ -63,5 +63,17 @@ loja com viés para duplicatas, chefes brandos nos antes 1–2.
 Nasceu no balanceamento para tornar profundidade competitiva com splits; vira elemento de
 identidade (a cascata cresce em crescendo — F3).
 
+**D16 — Evidência dos Gates 3/4/5 (medida, não presumida).** Gate 3: preview de impacto no
+drag; NOVA RUN em 81ms (≤2s); 3 velocidades persistentes; tooltips em 100% dos símbolos
+(mão/grade/loja); hierarquia de juice auditada contra a tabela §6 (hit-stop APENAS no
+Overflow, shake nunca na fase de decisão); 60.0 FPS médio / 57.0 mínimo durante resoluções
+(Performance API, headless). Gate 4: pitch sobe monotonicamente com a cadeia (teste de
+frequência); estado persiste entre reloads; as 15 conquistas cobertas por testes unitários
+E todas dispararam nas 50 runs automatizadas. Fase 5 (DoD): 50 runs do bot_sinergia DENTRO
+da UI real → zero erros de console, zero estados impossíveis, 10 vitórias; build de
+produção ~70 KB (< 500 KB). Deviação v0.1: desbloqueio de símbolos por Sucata adiado
+(pool completo desde o início; Sucata compra emissores e upgrades) — o balanceamento foi
+medido no pool cheio.
+
 **D13 — Grid persiste, placar zera.** O grid (a máquina) persiste entre rodadas e antes da
 mesma run. A pontuação de cada rodada é a de uma única resolução.
